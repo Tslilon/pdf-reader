@@ -4,6 +4,15 @@ import { NextResponse } from "next/server";
 import { parsePDF } from "../services/pdfParseService";
 import { analyzeWithAzure } from "../services/azureService";
 import { analyzeWithAdobe } from "../services/adobeService";
+import { analyzeWithGoogle, analyzeWithGoogleStatement } from "../services/googleService";
+import { analyzeWithAmazon } from "../services/amazonService";
+
+interface ServiceResult {
+  success: boolean;
+  text: string;
+  rawResponse?: any;
+  error?: string;
+}
 
 export async function POST(request: Request) {
   try {
@@ -21,19 +30,45 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    let result = { success: true, text: "" };
+    let result: ServiceResult = { success: true, text: "" };
 
     switch (service) {
-      case "azure":
-        result.text = await analyzeWithAzure(buffer);
+      case "azure": {
+        const response = await analyzeWithAzure(buffer);
+        result.text = response.text;
+        result.rawResponse = response.rawResponse;
         break;
-      case "adobe":
-        result.text = await analyzeWithAdobe(buffer);
+      }
+      case "adobe": {
+        const response = await analyzeWithAdobe(buffer);
+        result.text = response.text;
+        result.rawResponse = response.rawResponse;
         break;
-      case "simpleParse":
-        const parseResult = await parsePDF(buffer);
-        result.text = parseResult.text;
+      }
+      case "google": {
+        const response = await analyzeWithGoogle(buffer);
+        result.text = response.text;
+        result.rawResponse = response.rawResponse;
         break;
+      }
+      case "googleStatement": {
+        const response = await analyzeWithGoogleStatement(buffer);
+        result.text = response.text;
+        result.rawResponse = response.rawResponse;
+        break;
+      }
+      case "amazon": {
+        const response = await analyzeWithAmazon(buffer);
+        result.text = response.text;
+        result.rawResponse = response.rawResponse;
+        break;
+      }
+      case "simpleParse": {
+        const response = await parsePDF(buffer);
+        result.text = response.text;
+        result.rawResponse = response.rawResponse;
+        break;
+      }
       default:
         return NextResponse.json(
           { error: "Invalid or missing service parameter" },

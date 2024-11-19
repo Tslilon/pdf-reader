@@ -11,24 +11,27 @@ if (!endpoint || !apiKey) {
 
 const client = new DocumentAnalysisClient(endpoint, new AzureKeyCredential(apiKey));
 
-export async function analyzeWithAzure(buffer: Buffer): Promise<string> {
-  try {
-    // Start the analysis using the prebuilt "read" model
-    const poller = await client.beginAnalyzeDocument("prebuilt-read", buffer);
+interface AzureAnalysisResult {
+  text: string;
+  rawResponse: any;
+}
 
-    // Wait for the analysis to complete
+export async function analyzeWithAzure(buffer: Buffer): Promise<AzureAnalysisResult> {
+  try {
+    const poller = await client.beginAnalyzeDocument("prebuilt-read", buffer);
     const result = await poller.pollUntilDone();
 
-    // Extract text content from the result
     let extractedText = "";
-
     for (const page of result.pages || []) {
       for (const line of page.lines || []) {
         extractedText += line.content + "\n";
       }
     }
 
-    return extractedText.trim();
+    return {
+      text: extractedText.trim(),
+      rawResponse: result
+    };
   } catch (error) {
     console.error("Azure analysis error:", error);
     throw new Error("Failed to analyze PDF with Azure Form Recognizer.");

@@ -1,7 +1,17 @@
 // types/api.d.ts
 
-declare interface AnalysisResult {
+interface BaseAnalysisResult {
     success: boolean;
-    text?: string;
     error?: string;
   }
+
+interface TextAnalysisResult extends BaseAnalysisResult {
+    text: string;
+  }
+
+interface DetailedAnalysisResult extends BaseAnalysisResult {
+    text: string;
+    raw: any;
+  }
+
+type ServiceResponse = TextAnalysisResult | DetailedAnalysisResult;

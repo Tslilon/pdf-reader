@@ -10,7 +10,12 @@ const {
   ExtractPDFResult
 } = require("@adobe/pdfservices-node-sdk");
 
-export async function analyzeWithAdobe(buffer: Buffer): Promise<string> {
+interface AdobeAnalysisResult {
+  text: string;
+  rawResponse: any;
+}
+
+export async function analyzeWithAdobe(buffer: Buffer): Promise<AdobeAnalysisResult> {
   try {
     // Initialize credentials
     const credentials = new ServicePrincipalCredentials({
@@ -67,7 +72,10 @@ export async function analyzeWithAdobe(buffer: Buffer): Promise<string> {
       }
     });
 
-    return extractedText.trim();
+    return {
+      text: extractedText.trim(),
+      rawResponse: parsedData
+    };
   } catch (error) {
     console.error("Adobe PDF Extract API error:", error);
     throw new Error("Failed to analyze PDF with Adobe API");

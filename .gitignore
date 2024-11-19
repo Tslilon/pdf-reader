@@ -38,3 +38,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Debug files
+/debug/
+
+profit-tax-calculator-a712cec8cae8.json
+
+
+

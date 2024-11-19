@@ -3,23 +3,40 @@
 import { useState, useEffect } from "react";
 import { TextDisplayBox } from "./components/TextDisplayBox";
 
+interface ServiceState {
+  text: string;
+  rawResponse: any;
+}
+
 export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [simpleParseText, setSimpleParseText] = useState<string>("");
-  const [azureText, setAzureText] = useState<string>("");
-  const [googleText, setGoogleText] = useState<string>("");
-  const [amazonText, setAmazonText] = useState<string>("");
-  const [adobeText, setAdobeText] = useState<string>("");
+  const [serviceResults, setServiceResults] = useState<{
+    simpleParse: ServiceState;
+    azure: ServiceState;
+    google: ServiceState;
+    googleStatement: ServiceState;
+    amazon: ServiceState;
+    adobe: ServiceState;
+  }>({
+    simpleParse: { text: "", rawResponse: null },
+    azure: { text: "", rawResponse: null },
+    google: { text: "", rawResponse: null },
+    googleStatement: { text: "", rawResponse: null },
+    amazon: { text: "", rawResponse: null },
+    adobe: { text: "", rawResponse: null },
+  });
   const [errors, setErrors] = useState<{
     simpleParse: string;
     azure: string;
     google: string;
+    googleStatement: string;
     amazon: string;
     adobe: string;
   }>({
     simpleParse: "",
     azure: "",
     google: "",
+    googleStatement: "",
     amazon: "",
     adobe: "",
   });
@@ -27,19 +44,21 @@ export default function Home() {
     simpleParse: boolean;
     azure: boolean;
     google: boolean;
+    googleStatement: boolean;
     amazon: boolean;
     adobe: boolean;
   }>({
     simpleParse: false,
     azure: false,
     google: false,
+    googleStatement: false,
     amazon: false,
     adobe: false,
   });
 
   useEffect(() => {
     // Load default PDF file
-    fetch("/test1.pdf")
+    fetch("/test2.pdf")
       .then(response => response.blob())
       .then(blob => {
         const defaultFile = new File([blob], "test1.pdf", { type: "application/pdf" });
@@ -57,22 +76,26 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (file) {
       setUploadedFile(file);
-      setSimpleParseText("");
-      setAzureText("");
-      setGoogleText("");
-      setAmazonText("");
-      setAdobeText("");
+      setServiceResults({
+        simpleParse: { text: "", rawResponse: null },
+        azure: { text: "", rawResponse: null },
+        google: { text: "", rawResponse: null },
+        googleStatement: { text: "", rawResponse: null },
+        amazon: { text: "", rawResponse: null },
+        adobe: { text: "", rawResponse: null },
+      });
       setErrors({
         simpleParse: "",
         azure: "",
         google: "",
+        googleStatement: "",
         amazon: "",
         adobe: "",
       });
     }
   };
 
-  const handleAnalysis = async (serviceName: string) => {
+  const handleAnalysis = async (serviceName: keyof typeof serviceResults) => {
     if (!uploadedFile) {
       setErrors(prev => ({
         ...prev,
@@ -100,15 +123,13 @@ export default function Home() {
         throw new Error(data.error || "Failed to parse PDF");
       }
 
-      if (data.success && data.text) {
-        switch (serviceName) {
-          case "azure": setAzureText(data.text); break;
-          case "simpleParse": setSimpleParseText(data.text); break;
-          case "google": setGoogleText("not yet implemented"); break;
-          case "amazon": setAmazonText("not yet implemented"); break;
-          case "adobe": setAdobeText(data.text); break;
-        }
-      }
+      setServiceResults(prev => ({
+        ...prev,
+        [serviceName]: {
+          text: data.text || "",
+          rawResponse: data.rawResponse || null,
+        },
+      }));
     } catch (error) {
       console.error(`Error with ${serviceName} analysis:`, error);
       setErrors(prev => ({
@@ -119,12 +140,6 @@ export default function Home() {
       setIsLoading(prev => ({ ...prev, [serviceName]: false }));
     }
   };
-
-  const handleSimpleParse = () => handleAnalysis("simpleParse");
-  const handleAzureAnalysis = () => handleAnalysis("azure");
-  const handleGoogleAnalysis = () => handleAnalysis("google");
-  const handleAmazonAnalysis = () => handleAnalysis("amazon");
-  const handleAdobeAnalysis = () => handleAnalysis("adobe");
 
   return (
     <div className="min-h-screen p-8 pb-20 gap-16 sm:p-20">
@@ -139,41 +154,17 @@ export default function Home() {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
-          <TextDisplayBox
-            title="Simple Parse"
-            text={simpleParseText}
-            error={errors.simpleParse}
-            isLoading={isLoading.simpleParse}
-            onAnalyze={handleSimpleParse}
-          />
-          <TextDisplayBox
-            title="Azure AI"
-            text={azureText}
-            error={errors.azure}
-            isLoading={isLoading.azure}
-            onAnalyze={handleAzureAnalysis}
-          />
-          <TextDisplayBox
-            title="Google AI"
-            text={googleText}
-            error={errors.google}
-            isLoading={isLoading.google}
-            onAnalyze={handleGoogleAnalysis}
-          />
-          <TextDisplayBox
-            title="Amazon AI"
-            text={amazonText}
-            error={errors.amazon}
-            isLoading={isLoading.amazon}
-            onAnalyze={handleAmazonAnalysis}
-          />
-          <TextDisplayBox
-            title="Adobe API"
-            text={adobeText}
-            error={errors.adobe}
-            isLoading={isLoading.adobe}
-            onAnalyze={handleAdobeAnalysis}
-          />
+          {Object.entries(serviceResults).map(([service, result]) => (
+            <TextDisplayBox
+              key={service}
+              title={service.charAt(0).toUpperCase() + service.slice(1)}
+              text={result.text}
+              rawResponse={result.rawResponse}
+              error={errors[service as keyof typeof errors]}
+              isLoading={isLoading[service as keyof typeof isLoading]}
+              onAnalyze={() => handleAnalysis(service as keyof typeof serviceResults)}
+            />
+          ))}
         </div>
       </main>
     </div>
