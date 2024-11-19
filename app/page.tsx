@@ -6,6 +6,10 @@ import { TextDisplayBox } from "./components/TextDisplayBox";
 interface ServiceState {
   text: string;
   rawResponse: any;
+  openAIResult: {
+    text: string | null;
+    rawResponse: any;
+  } | null;
 }
 
 export default function Home() {
@@ -18,12 +22,12 @@ export default function Home() {
     amazon: ServiceState;
     adobe: ServiceState;
   }>({
-    simpleParse: { text: "", rawResponse: null },
-    azure: { text: "", rawResponse: null },
-    google: { text: "", rawResponse: null },
-    googleStatement: { text: "", rawResponse: null },
-    amazon: { text: "", rawResponse: null },
-    adobe: { text: "", rawResponse: null },
+    simpleParse: { text: "", rawResponse: null, openAIResult: null },
+    azure: { text: "", rawResponse: null, openAIResult: null },
+    google: { text: "", rawResponse: null, openAIResult: null },
+    googleStatement: { text: "", rawResponse: null, openAIResult: null },
+    amazon: { text: "", rawResponse: null, openAIResult: null },
+    adobe: { text: "", rawResponse: null, openAIResult: null },
   });
   const [errors, setErrors] = useState<{
     simpleParse: string;
@@ -41,6 +45,21 @@ export default function Home() {
     adobe: "",
   });
   const [isLoading, setIsLoading] = useState<{
+    simpleParse: boolean;
+    azure: boolean;
+    google: boolean;
+    googleStatement: boolean;
+    amazon: boolean;
+    adobe: boolean;
+  }>({
+    simpleParse: false,
+    azure: false,
+    google: false,
+    googleStatement: false,
+    amazon: false,
+    adobe: false,
+  });
+  const [isOpenAILoading, setIsOpenAILoading] = useState<{
     simpleParse: boolean;
     azure: boolean;
     google: boolean;
@@ -77,12 +96,12 @@ export default function Home() {
     if (file) {
       setUploadedFile(file);
       setServiceResults({
-        simpleParse: { text: "", rawResponse: null },
-        azure: { text: "", rawResponse: null },
-        google: { text: "", rawResponse: null },
-        googleStatement: { text: "", rawResponse: null },
-        amazon: { text: "", rawResponse: null },
-        adobe: { text: "", rawResponse: null },
+        simpleParse: { text: "", rawResponse: null, openAIResult: null },
+        azure: { text: "", rawResponse: null, openAIResult: null },
+        google: { text: "", rawResponse: null, openAIResult: null },
+        googleStatement: { text: "", rawResponse: null, openAIResult: null },
+        amazon: { text: "", rawResponse: null, openAIResult: null },
+        adobe: { text: "", rawResponse: null, openAIResult: null },
       });
       setErrors({
         simpleParse: "",
@@ -128,6 +147,7 @@ export default function Home() {
         [serviceName]: {
           text: data.text || "",
           rawResponse: data.rawResponse || null,
+          openAIResult: null,
         },
       }));
     } catch (error) {
@@ -138,6 +158,51 @@ export default function Home() {
       }));
     } finally {
       setIsLoading(prev => ({ ...prev, [serviceName]: false }));
+    }
+  };
+
+  const handleOpenAIAnalysis = async (serviceName: keyof typeof serviceResults) => {
+    if (!serviceResults[serviceName].text) {
+      return;
+    }
+
+    setIsOpenAILoading(prev => ({ ...prev, [serviceName]: true }));
+
+    try {
+      const response = await fetch("/api/openai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: serviceResults[serviceName].text,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to analyze with OpenAI");
+      }
+
+      setServiceResults(prev => ({
+        ...prev,
+        [serviceName]: {
+          ...prev[serviceName],
+          openAIResult: {
+            text: data.text,
+            rawResponse: data.rawResponse,
+          },
+        },
+      }));
+    } catch (error) {
+      console.error(`OpenAI analysis error:`, error);
+      setErrors(prev => ({
+        ...prev,
+        [serviceName]: error instanceof Error ? error.message : "Failed to analyze with OpenAI",
+      }));
+    } finally {
+      setIsOpenAILoading(prev => ({ ...prev, [serviceName]: false }));
     }
   };
 
@@ -160,9 +225,12 @@ export default function Home() {
               title={service.charAt(0).toUpperCase() + service.slice(1)}
               text={result.text}
               rawResponse={result.rawResponse}
+              openAIResult={result.openAIResult}
               error={errors[service as keyof typeof errors]}
               isLoading={isLoading[service as keyof typeof isLoading]}
+              isOpenAILoading={isOpenAILoading[service as keyof typeof isOpenAILoading]}
               onAnalyze={() => handleAnalysis(service as keyof typeof serviceResults)}
+              onOpenAIAnalyze={() => handleOpenAIAnalysis(service as keyof typeof serviceResults)}
             />
           ))}
         </div>

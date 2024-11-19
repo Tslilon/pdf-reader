@@ -15,6 +15,7 @@
     "@google-cloud/documentai": "^8.12.0",
     "adm-zip": "^0.5.16",
     "next": "15.0.3",
+    "openai": "^4.72.0",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "react": "19.0.0-rc-66855b96-20241106",
