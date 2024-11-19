@@ -6,6 +6,7 @@ const projectId = process.env.GOOGLE_PROJECT_ID;
 const location = process.env.GOOGLE_LOCATION || "us";
 const generalProcessorId = process.env.GOOGLE_PROCESSOR_ID;
 const statementProcessorId = process.env.GOOGLE_STATEMENT_PROCESSOR_ID;
+const keyFilePath = path.join(process.cwd(), process.env.GOOGLE_KEY_FILE_PATH || "");
 
 // Validate environment variables
 const requiredEnvVars = {
@@ -13,6 +14,7 @@ const requiredEnvVars = {
   GOOGLE_PROCESSOR_ID: generalProcessorId,
   GOOGLE_STATEMENT_PROCESSOR_ID: statementProcessorId,
   GOOGLE_LOCATION: location,
+  GOOGLE_KEY_FILE_PATH: keyFilePath,
 };
 
 Object.entries(requiredEnvVars).forEach(([key, value]) => {
@@ -20,8 +22,6 @@ Object.entries(requiredEnvVars).forEach(([key, value]) => {
     throw new Error(`Missing required environment variable: ${key}`);
   }
 });
-
-const keyFilePath = path.join(process.cwd(), "profit-tax-calculator-a712cec8cae8.json");
 
 // Validate service account key file
 if (!fs.existsSync(keyFilePath)) {

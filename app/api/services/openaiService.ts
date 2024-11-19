@@ -28,9 +28,14 @@ export async function analyzeWithOpenAI(content: string): Promise<OpenAIAnalysis
     // Get messages
     const messages = await openai.beta.threads.messages.list(thread.id);
     const lastMessage = messages.data[0];
+    const messageContent = lastMessage.content[0];
+
+    if (messageContent.type !== 'text') {
+      throw new Error("Unexpected message content type");
+    }
 
     return {
-      text: lastMessage.content[0].text.value,
+      text: messageContent.text.value,
       rawResponse: {
         thread,
         run: completedRun,
