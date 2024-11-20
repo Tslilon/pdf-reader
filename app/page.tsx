@@ -14,6 +14,7 @@ interface ServiceState {
     text: string | null;
     rawResponse: any;
   } | null;
+  extractionTime?: number;
 }
 
 export default function Home() {
@@ -134,20 +135,16 @@ export default function Home() {
   };
 
   const handleAnalysis = async (serviceName: keyof typeof serviceResults) => {
-    if (!uploadedFile) {
-      setErrors(prev => ({
-        ...prev,
-        [serviceName]: "Please upload a file first"
-      }));
-      return;
-    }
-
     setIsLoading(prev => ({ ...prev, [serviceName]: true }));
-    setErrors(prev => ({ ...prev, [serviceName]: "" }));
+    setErrors(prev => ({ ...prev, [serviceName]: null }));
+
+    const startTime = performance.now();  // Preserve timing
 
     try {
       const formData = new FormData();
-      formData.append("file", uploadedFile);
+      if (uploadedFile) {
+        formData.append("file", uploadedFile);
+      }
       formData.append("service", serviceName);
 
       const response = await fetch("/api/upload", {
@@ -156,18 +153,20 @@ export default function Home() {
       });
 
       const data = await response.json();
+      const endTime = performance.now();
+      const timeElapsed = Number(((endTime - startTime) / 1000).toFixed(2)); 
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to parse PDF");
+        throw new Error(data.error || "Failed to process file");
       }
 
       setServiceResults(prev => ({
         ...prev,
         [serviceName]: {
-          text: data.text || "",
-          rawResponse: data.rawResponse || null,
-          openAIResult: null,
-          claudeResult: null,
+          ...prev[serviceName],
+          text: data.text,
+          rawResponse: data.rawResponse,
+          extractionTime: timeElapsed  // Preserve timing information
         },
       }));
     } catch (error) {
@@ -323,6 +322,7 @@ export default function Home() {
               onAnalyze={() => handleAnalysis(service as keyof typeof serviceResults)}
               onOpenAIAnalyze={() => handleOpenAIAnalysis(service as keyof typeof serviceResults)}
               onClaudeAnalyze={() => handleClaudeAnalysis(service as keyof typeof serviceResults)}
+              extractionTime={result.extractionTime}
             />
           ))}
         </div>

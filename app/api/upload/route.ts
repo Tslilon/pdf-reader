@@ -16,10 +16,11 @@ interface ServiceResult {
 
 export async function POST(request: Request) {
   try {
+    console.log("Received request");
     const formData = await request.formData();
     const file = formData.get("file") as Blob;
     const service = formData.get("service") as string;
-
+    console.log("Service:", service);
     if (!file) {
       return NextResponse.json(
         { error: "No file uploaded" },
@@ -35,37 +36,37 @@ export async function POST(request: Request) {
     switch (service) {
       case "azure": {
         const response = await analyzeWithAzure(buffer);
-        result.text = response.text;
+        result.text = response.text.trim();
         result.rawResponse = response.rawResponse;
         break;
       }
       case "adobe": {
         const response = await analyzeWithAdobe(buffer);
-        result.text = response.text;
+        result.text = response.text.trim();
         result.rawResponse = response.rawResponse;
         break;
       }
       case "google": {
         const response = await analyzeWithGoogle(buffer);
-        result.text = response.text;
+        result.text = response.text.trim();
         result.rawResponse = response.rawResponse;
         break;
       }
       case "googleStatement": {
         const response = await analyzeWithGoogleStatement(buffer);
-        result.text = response.text;
+        result.text = response.text.trim();
         result.rawResponse = response.rawResponse;
         break;
       }
       case "amazon": {
         const response = await analyzeWithAmazon(buffer);
-        result.text = response.text;
+        result.text = response.text.trim();
         result.rawResponse = response.rawResponse;
         break;
       }
       case "simpleParse": {
         const response = await parsePDF(buffer);
-        result.text = response.text;
+        result.text = response.text.trim();
         result.rawResponse = response.rawResponse;
         break;
       }

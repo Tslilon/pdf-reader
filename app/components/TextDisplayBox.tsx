@@ -19,6 +19,7 @@ interface TextDisplayBoxProps {
   onAnalyze: () => void;
   onOpenAIAnalyze: () => void;
   onClaudeAnalyze: () => void;
+  extractionTime?: number;
 }
 
 export const TextDisplayBox = ({
@@ -34,6 +35,7 @@ export const TextDisplayBox = ({
   onAnalyze,
   onOpenAIAnalyze,
   onClaudeAnalyze,
+  extractionTime,
 }: TextDisplayBoxProps) => {
   const [isRawResponseVisible, setIsRawResponseVisible] = useState(false);
   const [isOpenAIRawVisible, setIsOpenAIRawVisible] = useState(false);
@@ -50,11 +52,18 @@ export const TextDisplayBox = ({
       </button>
 
       <div className="flex flex-col">
-        <div className="h-48 p-4 border border-gray-700/50 rounded overflow-auto bg-black/50">
+        <div className="h-48 pb-4 pt-2 px-4 border border-gray-700/50 rounded overflow-auto bg-black/50">
           {error ? (
             <p className="text-red-500">{error}</p>
           ) : text ? (
-            <p className="whitespace-pre-wrap text-gray-200">{text}</p>
+            <div className="whitespace-pre-wrap text-gray-200">
+                {extractionTime && (
+                <p className="text-xs text-white italic text-center pb-2 border-b border-gray-700/50">
+                  Extracted in {extractionTime.toFixed(2)}s
+                </p>
+              )}
+              <p>{text.trim()}</p>
+            </div>
           ) : (
             <p className="text-gray-500 italic">Extracted text will appear here...</p>
           )}
