@@ -1,7 +1,7 @@
 
 # PDF Reader and Analysis Tool
 
-This tool compares the performance of several OCR/PDF reader services and leverages OpenAI's Assistant API to parse extracted text and structure it according to a provided schema.
+This tool compares the performance of several OCR/PDF reader services and leverages Claude and ChatGPT's Assistant API to parse extracted text and structure it according to a provided schema.
 
 ![alt text](screenshot.png)
 
